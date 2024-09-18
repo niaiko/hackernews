@@ -24,6 +24,10 @@
     For the scope of this exercice it is OK to store the .env in your repo or in the docker-compose file
     Use a .env.example file if you don't want to
 
+    It is OK use AI tools to help you (Claude, ChatGPT, Copilot, V0)
+    But please do NOT generate whole pages / huge blocks of code from AI and copy paste them.
+    If you do and it's part of your workflow, you should be able to reproduce and debug the code yourself.
+
 Please use
 - Typescript
 - [React + Next.JS > V14 APP router](https://nextjs.org/docs) (not page router !)
@@ -35,9 +39,6 @@ Please use
 - [hackernews API](https://github.com/HackerNews/API) or https://hn.algolia.com/api
 
 
-    It is OK use AI tools to help you (Claude, ChatGPT, Copilot, V0)
-    But please do NOT generate whole pages / huge blocks of code from AI and copy paste them.
-    If you do and it's part of your workflow, you should be able to reproduce and debug the code yourself.
 
 # Front end
 
@@ -68,6 +69,8 @@ Please use
 
     Make a page displaying the user information with the following fields:
 
+    The user should be able to edit his profile and save modifications here.
+
 - username
 - email
 - age
@@ -76,12 +79,12 @@ Please use
 - a profile picture
 - a toggle to hide/show the user profile publicly (show by default)
 
-    The user should be able to edit his profile and save modifications here.
-
 
 ## Create a "See all users" page
 
-Make a page displaying all the users whose visibility is set to "show"
+    Make a page displaying all the users whose visibility is set to "show"
+    
+    Clicking on a user card should redirect to this user's "Favorites" page
 
 - Display the user information with the following fields:
 - username
@@ -89,13 +92,14 @@ Make a page displaying all the users whose visibility is set to "show"
 - profile picture
 - text description
 
-Clicking on a user card should redirect to this user's "Favorites" page
 
 # Backend
 
     Please use nodeJS + express + sequelize ORM
     Any DB is fine (SQLite, MySQL, PostgreSQL, MongoDB, etc.)
-    If you're having issues with localhost to access the API, you can use  http://BEALYBACK:8080/ instead of http://localhost:4001/ (see root page.tsx in the front end )
+
+    If you're having issues with localhost to access the API, you can
+    use  http://BEALYBACK:8080/ instead of http://localhost:4001/ (see root page.tsx in the front end )
 
 
 - Make a sequelize migration to generate any missing columns / tables
