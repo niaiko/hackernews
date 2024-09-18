@@ -1,0 +1,69 @@
+version: '3'
+
+services:
+    # ==========================================================================
+    # ---------------------------------- API -----------------------------------
+    # ==========================================================================
+    BEALYSQL:
+      tty         : true
+      image       : mysql:8.0
+      container_name: BEALYSQL
+      networks    : [BealyBackMysql_network]
+      ports       : ["3308:3306"]
+      environment :
+        - MYSQL_ROOT_PASSWORD=!pass
+        - MYSQL_DATABASE=BEALY_TT_DB
+      volumes:
+        - ./BEALYDB:/var/lib/mysql
+
+    # ==========================================================================
+    # ---------------------------------- API -----------------------------------
+    # ==========================================================================
+    BEALYBACK:
+      tty: true
+      image       : node:20
+      container_name: BEALYBACK
+      depends_on  : [BEALYSQL]
+      working_dir : /home/node/app/
+      volumes     : [./app/api/:/home/node/app/]
+      command     : sh -c "npm i && npm run dev"
+      ports       : ["8080:8080"]
+      networks    :
+        - BealyBackMongo_network
+        - BealyBackMysql_network
+        - BealyBackFrontBridge_network
+      environment:
+        - DB_USERNAME=root
+        - DB_PASSWORD=!pass
+        - DB_NAME=BEALY_TT_DB
+        - DB_HOST=BEALYSQL
+        - DB_DIALECT=mysql
+
+
+    # ==========================================================================
+    # --------------------------------- FRONT ----------------------------------
+    # ==========================================================================
+    BEALYFRONT:
+      tty: true
+      image       : node:20
+      container_name: BEALYFRONT
+      networks    : [BealyBackFrontBridge_network]
+      depends_on  : [BEALYBACK]
+      working_dir : /home/node/app/
+      volumes     : [./app/front/:/home/node/app/ ]
+      command     : sh -c "npm i && npm run dev"
+      ports       : ["3000:3000"]
+
+
+# ==============================================================================
+# ---------------------------------- NETWORKS ----------------------------------
+# ==============================================================================
+networks:
+  BealyBackMongo_network:
+    driver: bridge
+  BealyBackMysql_network:
+    driver: bridge
+  BealyBackFrontBridge_network:
+    driver: bridge
+
+
