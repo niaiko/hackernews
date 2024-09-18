@@ -25,10 +25,10 @@ services:
       restart     : unless-stopped
       image       : node:20
       container_name: BEALYBACK
-      depends_on  : [BEALYSQL]
+      depends_on  : [BEALYSQL, BEALYFRONT]
       working_dir : /home/node/app/
       volumes     : [./app/api/:/home/node/app/]
-      command     : sh -c "npm i && npm run dev"
+      command     : sh -c "sleep 20 && npm i && npm run dev" # Don't look at me, I'm a dirty hack
       ports       : ["4001:8080"]
       networks    :
         - BealyBackMongo_network
@@ -51,7 +51,7 @@ services:
       restart     : unless-stopped
       container_name: BEALYFRONT
       networks    : [BealyBackFrontBridge_network]
-      depends_on  : [BEALYBACK]
+      depends_on  : [BEALYSQL]
       working_dir : /home/node/app/
       volumes     : [./app/front/:/home/node/app/ ]
       command     : sh -c "npm i && npm run dev"
