@@ -13,9 +13,11 @@
     View other users and their favorite stories
 
 
-    There in an included docker-compose file to run a simple boilerplate
+    There in an included docker-compose file to run a simple boilerplate (on ports 4000, 4001, 4002)
     with Next, Node & MySQL to get you started but you can use your own.
     Just make sure that your build is reproducible !
+
+    If you're having issues with localhost to access the API, you can use  http://BEALYBACK:8080/
 
     DO NOT use privileged ports (<1024 for example) or anything requiring sudo on the host
 
@@ -96,6 +98,8 @@ The user should be able to edit his profile and save modifications here.
 
 Please use nodeJS + express + sequelize ORM
 Any DB is fine (SQLite, MySQL, PostgreSQL, MongoDB, etc.)
+If you're having issues with localhost to access the API, you can use  http://BEALYBACK:8080/ instead of http://localhost:4001/ (see root page.tsx in the front end )
+
 
 - Make a sequelize migration to generate any missing columns / tables
 - Create a route to login
