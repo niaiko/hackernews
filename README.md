@@ -33,7 +33,7 @@ Please use
 - [hackernews API](https://github.com/HackerNews/API) or https://hn.algolia.com/api
 
 
-    You can use AI tools to help you (Claude, ChatGPT, Copilot, V0)
+    It is OK use AI tools to help you (Claude, ChatGPT, Copilot, V0)
 
     But please do NOT generate whole pages / huge blocks of code from AI and copy paste them.
 
