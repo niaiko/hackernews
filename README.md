@@ -13,7 +13,8 @@
     View other users and their favorite stories
 
 
-    There in an included docker-compose file to run a simple boilerplate with MySQL to get you started but you can use your own.
+    There in an included docker-compose file to run a simple boilerplate
+    with Next, Node & MySQL to get you started but you can use your own.
     Just make sure that your build is reproducible !
 
     DO NOT use privileged ports (<1024 for example) or anything requiring sudo on the host
@@ -109,4 +110,4 @@ Any DB is fine (SQLite, MySQL, PostgreSQL, MongoDB, etc.)
 - Use a middleware for authentication whenever applicable
 - Validate the data received whenever possible
 - Please output logs to the console (you can use [winston](https://github.com/winstonjs/winston) for example)
-
+- Seed the database with dummy users (optional)
