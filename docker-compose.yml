@@ -5,6 +5,7 @@ services:
     # ---------------------------------- API -----------------------------------
     # ==========================================================================
     BEALYSQL:
+      restart     : unless-stopped
       tty         : true
       image       : mysql:8.0
       container_name: BEALYSQL
@@ -21,6 +22,7 @@ services:
     # ==========================================================================
     BEALYBACK:
       tty: true
+      restart     : unless-stopped
       image       : node:20
       container_name: BEALYBACK
       depends_on  : [BEALYSQL]
@@ -46,6 +48,7 @@ services:
     BEALYFRONT:
       tty: true
       image       : node:20
+      restart     : unless-stopped
       container_name: BEALYFRONT
       networks    : [BealyBackFrontBridge_network]
       depends_on  : [BEALYBACK]
