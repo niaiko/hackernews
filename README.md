@@ -33,7 +33,9 @@ Please use
 
 
     You can use AI tools to help you (Claude, ChatGPT, Copilot, V0)
+
     But please do NOT generate whole pages / huge blocks of code from AI and copy paste them.
+
     If you do and it's part of your workflow, you should be able to reproduce and debug the code yourself.
 
 # Front end
