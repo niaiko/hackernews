@@ -13,7 +13,7 @@
     View other users and their favorite stories
 
 
-    There in an included docker-compose file to run a simple boilerplate (on ports 4000, 4001, 4002)
+    There is an included docker-compose file to run a simple boilerplate (on ports 4000, 4001, 4002)
     with Next, Node & MySQL to get you started but you can use your own.
     Just make sure that your build is reproducible !
 
@@ -36,9 +36,7 @@ Please use
 
 
     It is OK use AI tools to help you (Claude, ChatGPT, Copilot, V0)
-
     But please do NOT generate whole pages / huge blocks of code from AI and copy paste them.
-
     If you do and it's part of your workflow, you should be able to reproduce and debug the code yourself.
 
 # Front end
@@ -68,7 +66,7 @@ Please use
 
 ## Create a "User Profile" Page
 
-Make a page displaying the user information with the following fields:
+    Make a page displaying the user information with the following fields:
 
 - username
 - email
@@ -78,13 +76,12 @@ Make a page displaying the user information with the following fields:
 - a profile picture
 - a toggle to hide/show the user profile publicly (show by default)
 
-The user should be able to edit his profile and save modifications here.
+    The user should be able to edit his profile and save modifications here.
 
 
 ## Create a "See all users" page
 
-- Make a page displaying all the users whose visibility is set to "show"
-
+Make a page displaying all the users whose visibility is set to "show"
 
 - Display the user information with the following fields:
 - username
@@ -92,13 +89,13 @@ The user should be able to edit his profile and save modifications here.
 - profile picture
 - text description
 
-- Clicking on a user card should redirect to this user's "Favorites" page
+Clicking on a user card should redirect to this user's "Favorites" page
 
 # Backend
 
-Please use nodeJS + express + sequelize ORM
-Any DB is fine (SQLite, MySQL, PostgreSQL, MongoDB, etc.)
-If you're having issues with localhost to access the API, you can use  http://BEALYBACK:8080/ instead of http://localhost:4001/ (see root page.tsx in the front end )
+    Please use nodeJS + express + sequelize ORM
+    Any DB is fine (SQLite, MySQL, PostgreSQL, MongoDB, etc.)
+    If you're having issues with localhost to access the API, you can use  http://BEALYBACK:8080/ instead of http://localhost:4001/ (see root page.tsx in the front end )
 
 
 - Make a sequelize migration to generate any missing columns / tables
