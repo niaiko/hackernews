@@ -1,56 +1,59 @@
+import express from "express"
+import cors from "cors"
+import morgan from "morgan"
+import helmet from "helmet"
+import type { Request, Response, NextFunction } from "express"
+import { db } from "./models"
+import authRoutes from "./routes/auth.routes"
+import userRoutes from "./routes/user.routes"
+import favoriteRoutes from "./routes/favorite.routes"
 
-import express, { Request, Response } from 'express';
-import mysql from 'mysql2/promise';
-import sequelize from './models';
-import User from './models/User';
-import dotenv from 'dotenv';
+const app = express()
 
-dotenv.config();
+// Middleware
+app.use(cors())
+app.use(express.json())
+app.use(express.urlencoded({ extended: true }))
+app.use(morgan("dev"))
+app.use(
+  helmet({
+    contentSecurityPolicy: false,
+  }),
+)
 
-const app = express();
+// Default route
+app.get("/", (req: Request, res: Response) => {
+  res.json({ message: "Welcome to the ModernHN API" })
+})
 
-const createDatabase = async (): Promise<void> => {
-    try {
-        const connection = await mysql.createConnection({
-            host: process.env.DB_HOST || 'BEALYSQL',
-            user: process.env.DB_USERNAME || 'root',
-            password: process.env.DB_PASSWORD || '!pass',
-        });
+// Routes
+app.use("/api/auth", authRoutes)
+app.use("/api/users", userRoutes)
+app.use("/api/favorites", favoriteRoutes)
 
-        const dbName = process.env.DB_NAME || 'BEALY_TT_DB';
-        await connection.query(`CREATE DATABASE IF NOT EXISTS \`${dbName}\`;`);
-        console.log(`Database '${dbName}' created or already exists.`);
-    } catch (error) {
-        console.error('Error creating database:', error);
-    }
-};
+// Error handler
+app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+  console.error(err.stack)
+  res.status(500).json({
+    message: "Internal Server Error",
+    error: process.env.NODE_ENV === "development" ? err.message : undefined,
+  })
+})
 
-createDatabase().then(() => {
-    app.use(express.json());
-    app.get('/', (request: Request, response: Response) => {
-        return response.status(200).send({message:"API is reachable"});
-    });
+// Database initialization
+const PORT = process.env.PORT || 4001
 
+db.sequelize
+  .sync()
+  .then(() => {
+    console.log("Database synced successfully")
+    app.listen(PORT, () => {
+      console.log(`Server is running on port ${PORT}`)
+    })
+  })
+  .catch((err: Error) => {
+    console.error("Failed to sync database:", err)
+  })
 
-
-
-
-    // =============================================================================
-    // =============================================================================
-
-
-
-
-    sequelize.sync().then(() => {
-        app.listen(8080, () => {
-            console.log('Server is running on port 8080');
-        });
-    }).catch((err:any) => {
-        console.error('Error syncing Sequelize models:', err);
-    });
-}).catch((err) => {
-    console.error('Error during database creation:', err);
-});
-
-export default app;
+export default app
 
