@@ -6,6 +6,7 @@ import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from "@/comp
 import { Button } from "@/components/ui/button"
 import { Icons } from "@/components/icons"
 import { useToast } from "@/components/ui/use-toast"
+import { motion } from "framer-motion"
 
 interface StoryCardProps {
   story: {
@@ -24,6 +25,7 @@ interface StoryCardProps {
 export function StoryCard({ story, isFavorite, onToggleFavorite }: StoryCardProps) {
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
+  const [isHovered, setIsHovered] = useState(false)
 
   const formatTime = (timestamp: number) => {
     const now = new Date()
@@ -58,51 +60,80 @@ export function StoryCard({ story, isFavorite, onToggleFavorite }: StoryCardProp
   }
 
   return (
-    <Card className="transition-all duration-200 hover:shadow-md">
-      <CardHeader className="p-4">
-        <div className="flex justify-between items-start gap-2">
-          <div className="space-y-1 flex-1">
-            <CardTitle className="text-lg leading-tight">
-              <Link
-                href={story.url || `https://news.ycombinator.com/item?id=${story.id}`}
-                target="_blank"
-                className="hover:underline flex items-start"
-              >
-                {story.title}
-                {story.url && <Icons.externalLink className="ml-1 h-3 w-3 flex-shrink-0 mt-1.5" />}
-              </Link>
-            </CardTitle>
-            <CardDescription className="flex items-center text-xs gap-2">
-              <span className="font-medium">{story.score} points</span>
-              <span>by {story.by}</span>
-              <span>{formatTime(story.time)}</span>
-            </CardDescription>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      whileHover={{ scale: 1.01 }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <Card className={`transition-all duration-300 ${isHovered ? "shadow-lg border-primary/30" : "shadow-sm"}`}>
+        <CardHeader className="p-4">
+          <div className="flex justify-between items-start gap-2">
+            <div className="space-y-1 flex-1">
+              <CardTitle className="text-lg leading-tight">
+                <Link
+                  href={story.url || `https://news.ycombinator.com/item?id=${story.id}`}
+                  target="_blank"
+                  className="hover:text-primary transition-colors flex items-start"
+                >
+                  {story.title}
+                  {story.url && (
+                    <motion.span
+                      initial={{ opacity: 0, x: -5 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.2 }}
+                    >
+                      <Icons.externalLink className="ml-1 h-3 w-3 flex-shrink-0 mt-1.5" />
+                    </motion.span>
+                  )}
+                </Link>
+              </CardTitle>
+              <CardDescription className="flex items-center text-xs gap-2">
+                <span className="font-medium flex items-center">
+                  <Icons.upvote className="h-3 w-3 mr-1 text-primary" />
+                  {story.score} points
+                </span>
+                <span>by {story.by}</span>
+                <span className="flex items-center">
+                  <Icons.clock className="h-3 w-3 mr-1" />
+                  {formatTime(story.time)}
+                </span>
+              </CardDescription>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleFavoriteClick}
+              disabled={isLoading}
+              className={`flex-shrink-0 transition-all ${isFavorite ? "text-primary" : ""}`}
+            >
+              {isLoading ? (
+                <Icons.spinner className="h-4 w-4 animate-spin" />
+              ) : (
+                <motion.div whileHover={{ scale: 1.2 }} whileTap={{ scale: 0.9 }}>
+                  <Icons.heart className={`h-4 w-4 ${isFavorite ? "fill-primary" : ""}`} />
+                </motion.div>
+              )}
+              <span className="sr-only">{isFavorite ? "Remove from favorites" : "Add to favorites"}</span>
+            </Button>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleFavoriteClick}
-            disabled={isLoading}
-            className="flex-shrink-0"
-          >
-            {isLoading ? (
-              <Icons.spinner className="h-4 w-4 animate-spin" />
-            ) : (
-              <Icons.heart className={`h-4 w-4 ${isFavorite ? "fill-primary" : ""}`} />
-            )}
-            <span className="sr-only">{isFavorite ? "Remove from favorites" : "Add to favorites"}</span>
+        </CardHeader>
+        <CardFooter className="p-4 pt-0 flex justify-between items-center">
+          <Button variant="outline" size="sm" asChild className="text-xs h-8 transition-all hover:bg-primary/10">
+            <Link
+              href={`https://news.ycombinator.com/item?id=${story.id}`}
+              target="_blank"
+              className="flex items-center"
+            >
+              <Icons.messageCircle className="h-3 w-3 mr-1" />
+              {story.descendants || 0} comments
+            </Link>
           </Button>
-        </div>
-      </CardHeader>
-      <CardFooter className="p-4 pt-0 flex justify-between items-center">
-        <Button variant="outline" size="sm" asChild className="text-xs h-8">
-          <Link href={`https://news.ycombinator.com/item?id=${story.id}`} target="_blank">
-            <Icons.messageCircle className="h-3 w-3 mr-1" />
-            {story.descendants || 0} comments
-          </Link>
-        </Button>
-      </CardFooter>
-    </Card>
+        </CardFooter>
+      </Card>
+    </motion.div>
   )
 }
 

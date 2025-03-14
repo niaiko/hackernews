@@ -3,11 +3,11 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useState, useEffect } from "react"
+import { useAuth } from "@/contexts/auth-context"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-
-
+import { Icons } from "@/components/icons"
 import {
   NavigationMenu,
   NavigationMenuItem,
@@ -24,14 +24,17 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { User } from "lucide-react"
-import { Icons } from "./icons"
+import { User } from 'lucide-react'
+
+// Importez le fichier de configuration
+import { config } from "@/config"
 import { ModeToggle } from "./mode-toogle"
 
 export function Header() {
   const pathname = usePathname()
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const { isAuthenticated, user, logout } = useAuth()
   const [isScrolled, setIsScrolled] = useState(false)
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
 
   // Check scroll position for styling header
   useEffect(() => {
@@ -42,51 +45,82 @@ export function Header() {
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
-  // In a real implementation, this would check the auth state from context or cookies
+  // Fetch user avatar when user is authenticated
   useEffect(() => {
-    // Mock check for authentication
-    const checkAuth = async () => {
-      try {
-        // Replace with actual auth check
-        const user = localStorage.getItem("user")
-        setIsAuthenticated(!!user)
-      } catch (error) {
-        setIsAuthenticated(false)
+    const fetchAvatar = async () => {
+      if (isAuthenticated && user?.id) {
+        try {
+          // Remplacez l'URL codée en dur pour récupérer l'avatar:
+          // Dans fetchAvatar():
+          const response = await fetch(`${config.apiUrl}/api/users/${user.id}/avatar`)
+          const data = await response.json()
+
+          if (response.ok && data.avatar) {
+            setAvatarUrl(data.avatar)
+          } else {
+            // Si pas d'avatar, on utilise l'URL par défaut ou null
+            setAvatarUrl(null)
+          }
+        } catch (error) {
+          console.error("Error fetching avatar:", error)
+          setAvatarUrl(null)
+        }
       }
     }
 
-    checkAuth()
-  }, [])
+    fetchAvatar()
+  }, [isAuthenticated, user])
 
   return (
     <header
       className={cn(
-        "sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur transition-all duration-200",
-        isScrolled && "shadow-sm",
+        "sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur transition-all duration-300",
+        isScrolled && "shadow-md",
       )}
     >
       <div className="container flex h-16 items-center justify-between py-4">
         <div className="flex items-center gap-6 md:gap-10">
-          <Link href="/" className="flex items-center space-x-2">
-            <Icons.logo className="h-6 w-6" />
+          <Link href="/" className="flex items-center space-x-2 transition-transform hover:scale-105">
+            <Icons.logo className="h-6 w-6 text-primary" />
             <span className="hidden font-bold sm:inline-block">ModernHN</span>
           </Link>
           <NavigationMenu className="hidden md:flex">
             <NavigationMenuList>
               <NavigationMenuItem>
                 <Link href="/stories" legacyBehavior passHref>
-                  <NavigationMenuLink className={navigationMenuTriggerStyle()}>Stories</NavigationMenuLink>
+                  <NavigationMenuLink
+                    className={cn(
+                      navigationMenuTriggerStyle(),
+                      pathname === "/stories" && "bg-accent text-accent-foreground",
+                    )}
+                  >
+                    Stories
+                  </NavigationMenuLink>
                 </Link>
               </NavigationMenuItem>
               <NavigationMenuItem>
                 <Link href="/users" legacyBehavior passHref>
-                  <NavigationMenuLink className={navigationMenuTriggerStyle()}>Users</NavigationMenuLink>
+                  <NavigationMenuLink
+                    className={cn(
+                      navigationMenuTriggerStyle(),
+                      pathname === "/users" && "bg-accent text-accent-foreground",
+                    )}
+                  >
+                    Users
+                  </NavigationMenuLink>
                 </Link>
               </NavigationMenuItem>
               {isAuthenticated && (
                 <NavigationMenuItem>
                   <Link href="/favorites" legacyBehavior passHref>
-                    <NavigationMenuLink className={navigationMenuTriggerStyle()}>Favorites</NavigationMenuLink>
+                    <NavigationMenuLink
+                      className={cn(
+                        navigationMenuTriggerStyle(),
+                        pathname === "/favorites" && "bg-accent text-accent-foreground",
+                      )}
+                    >
+                      Favorites
+                    </NavigationMenuLink>
                   </Link>
                 </NavigationMenuItem>
               )}
@@ -98,11 +132,14 @@ export function Header() {
           {isAuthenticated ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src="/placeholder.svg" alt="User" />
-                    <AvatarFallback>
-                      <User className="h-4 w-4" />
+                <Button variant="ghost" className="relative h-10 w-10 rounded-full p-0 transition-all hover:scale-110">
+                  <Avatar className="h-10 w-10 border-2 border-primary">
+                    <AvatarImage
+                      src={avatarUrl || user?.profileImageUrl || "/placeholder.svg?height=40&width=40"}
+                      alt={user?.username || "User"}
+                    />
+                    <AvatarFallback className="bg-primary/10">
+                      {user?.username?.substring(0, 2).toUpperCase() || <User className="h-4 w-4" />}
                     </AvatarFallback>
                   </Avatar>
                 </Button>
@@ -110,25 +147,32 @@ export function Header() {
               <DropdownMenuContent className="w-56" align="end" forceMount>
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">Username</p>
-                    <p className="text-xs leading-none text-muted-foreground">user@example.com</p>
+                    <p className="text-sm font-medium leading-none">{user?.username}</p>
+                    <p className="text-xs leading-none text-muted-foreground">{user?.email}</p>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                  <Link href="/profile">Profile</Link>
+                  <Link href="/profile" className="cursor-pointer">
+                    <Icons.user className="mr-2 h-4 w-4" />
+                    Profile
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link href="/favorites">Favorites</Link>
+                  <Link href="/favorites" className="cursor-pointer">
+                    <Icons.heart className="mr-2 h-4 w-4" />
+                    Favorites
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link href="/auth/logout">Log out</Link>
+                <DropdownMenuItem onClick={logout} className="cursor-pointer text-destructive focus:text-destructive">
+                  <Icons.logout className="mr-2 h-4 w-4" />
+                  Log out
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <Button asChild variant="default" size="sm">
+            <Button asChild variant="default" size="sm" className="animate-pulse">
               <Link href="/auth/login">Login</Link>
             </Button>
           )}
@@ -137,4 +181,3 @@ export function Header() {
     </header>
   )
 }
-

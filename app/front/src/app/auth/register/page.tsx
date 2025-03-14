@@ -11,25 +11,27 @@ import { Button } from "@/components/ui/button"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { useToast } from "@/components/ui/use-toast"
 import { Icons } from "@/components/icons"
+import { useToast } from "@/components/ui/use-toast"
+import { useAuth } from "@/contexts/auth-context"
+import { config } from "@/config"
 
 const registerSchema = z
   .object({
-    username: z.string().min(3, { message: "Username must be at least 3 characters" }),
-    email: z.string().email({ message: "Please enter a valid email address" }),
+    username: z.string().min(3, { message: "Le nom d'utilisateur doit contenir au moins 3 caractères" }),
+    email: z.string().email({ message: "Veuillez entrer une adresse email valide" }),
     age: z.string().refine(
       (val) => {
         const age = Number.parseInt(val)
         return !isNaN(age) && age > 0 && age < 120
       },
-      { message: "Please enter a valid age" },
+      { message: "Veuillez entrer un âge valide" },
     ),
-    password: z.string().min(8, { message: "Password must be at least 8 characters" }),
+    password: z.string().min(8, { message: "Le mot de passe doit contenir au moins 8 caractères" }),
     confirmPassword: z.string(),
   })
   .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords don't match",
+    message: "Les mots de passe ne correspondent pas",
     path: ["confirmPassword"],
   })
 
@@ -38,6 +40,7 @@ type RegisterFormValues = z.infer<typeof registerSchema>
 export default function RegisterPage() {
   const router = useRouter()
   const { toast } = useToast()
+  const { login } = useAuth()
   const [isLoading, setIsLoading] = useState(false)
 
   const form = useForm<RegisterFormValues>({
@@ -55,8 +58,9 @@ export default function RegisterPage() {
     setIsLoading(true)
 
     try {
-      // In a real app, make an API call to your auth endpoint
-      const response = await fetch("http://localhost:4001/api/auth/register", {
+      // Remplacez l'URL codée en dur par la configuration
+      // Dans la fonction onSubmit, remplacez la ligne contenant l'URL directe:
+      const response = await fetch(`${config.apiUrl}/api/auth/register`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -72,29 +76,28 @@ export default function RegisterPage() {
       })
 
       if (!response.ok) {
-        throw new Error("Registration failed")
+        const errorData = await response.json()
+        throw new Error(errorData.message || "Registration failed")
       }
 
       const userData = await response.json()
 
-      // Store the user data and token
-      localStorage.setItem("user", JSON.stringify(userData.user))
-      localStorage.setItem("token", userData.token)
+      // Utiliser la fonction login du contexte d'authentification
+      login(userData.token, userData.user)
 
       toast({
-        title: "Registration successful",
-        description: "Your account has been created successfully.",
+        title: "Inscription réussie",
+        description: "Votre compte a été créé avec succès.",
       })
 
-      // Redirect to the stories page
+      // Rediriger vers la page d'accueil
       router.push("/stories")
-      router.refresh()
     } catch (error) {
       console.error("Registration error:", error)
       toast({
         variant: "destructive",
-        title: "Registration failed",
-        description: "Please check your information and try again.",
+        title: "Échec de l'inscription",
+        description: error instanceof Error ? error.message : "Veuillez vérifier vos informations et réessayer.",
       })
     } finally {
       setIsLoading(false)
@@ -102,17 +105,19 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="container flex h-screen w-screen flex-col items-center justify-center">
+    <div className="container flex h-full min-h-[calc(100vh-4rem)] w-screen flex-col items-center justify-center py-8">
       <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[400px]">
         <div className="flex flex-col space-y-2 text-center">
-          <Icons.logo className="mx-auto h-6 w-6" />
-          <h1 className="text-2xl font-semibold tracking-tight">Create an account</h1>
-          <p className="text-sm text-muted-foreground">Enter your information to create an account</p>
+          <div className="flex justify-center">
+            <Icons.logo className="h-10 w-10 text-primary animate-pulse" />
+          </div>
+          <h1 className="text-2xl font-semibold tracking-tight">Créer un compte</h1>
+          <p className="text-sm text-muted-foreground">Entrez vos informations pour créer un compte</p>
         </div>
-        <Card>
+        <Card className="border-primary/20">
           <CardHeader>
-            <CardTitle>Register</CardTitle>
-            <CardDescription>Create a new account to get started</CardDescription>
+            <CardTitle>Inscription</CardTitle>
+            <CardDescription>Créez un nouveau compte pour commencer</CardDescription>
           </CardHeader>
           <CardContent>
             <Form {...form}>
@@ -122,9 +127,9 @@ export default function RegisterPage() {
                   name="username"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Username</FormLabel>
+                      <FormLabel>Nom d'utilisateur</FormLabel>
                       <FormControl>
-                        <Input placeholder="johndoe" {...field} />
+                        <Input placeholder="johndoe" className="transition-all focus:border-primary" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -137,7 +142,13 @@ export default function RegisterPage() {
                     <FormItem>
                       <FormLabel>Email</FormLabel>
                       <FormControl>
-                        <Input placeholder="your.email@example.com" type="email" autoComplete="email" {...field} />
+                        <Input
+                          placeholder="votre.email@exemple.com"
+                          type="email"
+                          autoComplete="email"
+                          className="transition-all focus:border-primary"
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -148,9 +159,14 @@ export default function RegisterPage() {
                   name="age"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Age</FormLabel>
+                      <FormLabel>Âge</FormLabel>
                       <FormControl>
-                        <Input placeholder="30" type="number" {...field} />
+                        <Input
+                          placeholder="30"
+                          type="number"
+                          className="transition-all focus:border-primary"
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -161,9 +177,15 @@ export default function RegisterPage() {
                   name="password"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Password</FormLabel>
+                      <FormLabel>Mot de passe</FormLabel>
                       <FormControl>
-                        <Input placeholder="••••••••" type="password" autoComplete="new-password" {...field} />
+                        <Input
+                          placeholder="••••••••"
+                          type="password"
+                          autoComplete="new-password"
+                          className="transition-all focus:border-primary"
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -174,25 +196,37 @@ export default function RegisterPage() {
                   name="confirmPassword"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Confirm Password</FormLabel>
+                      <FormLabel>Confirmer le mot de passe</FormLabel>
                       <FormControl>
-                        <Input placeholder="••••••••" type="password" autoComplete="new-password" {...field} />
+                        <Input
+                          placeholder="••••••••"
+                          type="password"
+                          autoComplete="new-password"
+                          className="transition-all focus:border-primary"
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                <Button className="w-full" type="submit" disabled={isLoading}>
-                  {isLoading && <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />}
-                  Register
+                <Button className="w-full transition-all hover:shadow-lg" type="submit" disabled={isLoading}>
+                  {isLoading ? (
+                    <>
+                      <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
+                      Inscription en cours...
+                    </>
+                  ) : (
+                    "S'inscrire"
+                  )}
                 </Button>
               </form>
             </Form>
           </CardContent>
           <CardFooter className="flex flex-col space-y-4">
             <div className="text-sm text-center text-muted-foreground">
-              <Link href="/auth/login" className="underline underline-offset-4 hover:text-primary">
-                Already have an account? Sign in
+              <Link href="/auth/login" className="underline underline-offset-4 hover:text-primary transition-colors">
+                Vous avez déjà un compte ? Connectez-vous
               </Link>
             </div>
           </CardFooter>
@@ -201,4 +235,3 @@ export default function RegisterPage() {
     </div>
   )
 }
-

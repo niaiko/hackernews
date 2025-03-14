@@ -21,7 +21,7 @@ import {
   X,
   Check,
   ThumbsUp,
-  MessageCircle
+  MessageCircle,
 } from "lucide-react"
 
 type IconProps = React.HTMLAttributes<SVGElement>
@@ -64,7 +64,7 @@ export const Icons = {
   close: X,
   check: Check,
   upvote: ThumbsUp,
-  messageCircle: MessageCircle
+  messageCircle: MessageCircle,
 }
 
 export type Icon = keyof typeof Icons

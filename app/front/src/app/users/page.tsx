@@ -10,6 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useToast } from "@/components/ui/use-toast"
 import { Icons } from "@/components/icons"
+import { config } from "@/config"
 
 type User = {
   id: number
@@ -30,7 +31,9 @@ export default function UsersPage() {
     const fetchUsers = async () => {
       setIsLoading(true)
       try {
-        const response = await fetch("http://localhost:4001/api/users/public")
+        // Remplacez l'URL codée en dur:
+        // Dans fetchUsers():
+        const response = await fetch(`${config.apiUrl}/api/users/public`)
 
         if (!response.ok) {
           throw new Error("Failed to fetch users")
@@ -142,4 +145,3 @@ export default function UsersPage() {
     </div>
   )
 }
-

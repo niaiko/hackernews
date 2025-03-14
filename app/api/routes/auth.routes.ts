@@ -5,6 +5,7 @@ import jwt from "jsonwebtoken"
 import { db } from "../models"
 import type { Request, Response } from "express"
 import {Op} from "sequelize";
+import logger from "../utils/logger"
 
 const router = express.Router()
 const User = db.User
@@ -25,6 +26,7 @@ router.post(
     // Validate request
     const errors = validationResult(req)
     if (!errors.isEmpty()) {
+      logger.warn(`Registration validation failed: ${JSON.stringify(errors.array())}`)
       return res.status(400).json({ errors: errors.array() })
     }
 
@@ -37,6 +39,7 @@ router.post(
       })
 
       if (existingUser) {
+        logger.warn(`Registration failed: Username or email already in use - ${req.body.username} / ${req.body.email}`)
         return res.status(400).json({
           message: "Username or email already in use",
         })
@@ -58,7 +61,7 @@ router.post(
 
       // Generate JWT
       const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: "7d" })
-
+      logger.info(`User registered successfully: ${user.username} (ID: ${user.id})`)
       // Return user data without password and token
       res.status(201).json({
         message: "User registered successfully",
@@ -66,7 +69,7 @@ router.post(
         user: user.toSafeObject(),
       })
     } catch (error: any) {
-      console.error("Registration error:", error)
+      logger.error(`Registration error: ${error.message}`)
       res.status(500).json({
         message: "Failed to register user",
         error: process.env.NODE_ENV === "development" ? error.message : undefined,
@@ -86,6 +89,7 @@ router.post(
     // Validate request
     const errors = validationResult(req)
     if (!errors.isEmpty()) {
+      logger.warn(`Login validation failed: ${JSON.stringify(errors.array())}`)
       return res.status(400).json({ errors: errors.array() })
     }
 
@@ -96,6 +100,7 @@ router.post(
       })
 
       if (!user) {
+        logger.warn(`Login failed: Invalid credentials for email ${req.body.email}`)
         return res.status(401).json({
           message: "Invalid credentials",
         })
@@ -104,6 +109,7 @@ router.post(
       // Check password
       const isMatch = await bcrypt.compare(req.body.password, user.password)
       if (!isMatch) {
+        logger.warn(`Login failed: Invalid password for user ${user.username} (ID: ${user.id})`)
         return res.status(401).json({
           message: "Invalid credentials",
         })
@@ -111,7 +117,7 @@ router.post(
 
       // Generate JWT
       const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: "7d" })
-
+      logger.info(`User logged in successfully: ${user.username} (ID: ${user.id})`)
       // Return user data without password and token
       res.json({
         message: "Login successful",
@@ -119,7 +125,7 @@ router.post(
         user: user.toSafeObject(),
       })
     } catch (error: any) {
-      console.error("Login error:", error)
+      logger.error(`Login error: ${error.message}`)
       res.status(500).json({
         message: "Failed to login",
         error: process.env.NODE_ENV === "development" ? error.message : undefined,

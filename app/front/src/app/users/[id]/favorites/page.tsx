@@ -9,8 +9,11 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Skeleton } from "@/components/ui/skeleton"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useToast } from "@/components/ui/use-toast"
-import { Separator } from "@/components/ui/separator"
 import { Icons } from "@/components/icons"
+import { Separator } from "@/components/ui/separator"
+
+// Importez le fichier de configuration
+import { config } from "@/config"
 
 type User = {
   id: number
@@ -45,7 +48,7 @@ export default function UserFavoritesPage() {
       setIsLoading(true)
       try {
         // Fetch user info
-        const userResponse = await fetch(`http://localhost:4001/api/users/${userId}`)
+        const userResponse = await fetch(`${config.apiUrl}/api/users/${userId}`)
 
         if (!userResponse.ok) {
           if (userResponse.status === 404) {
@@ -64,7 +67,7 @@ export default function UserFavoritesPage() {
         setUser(userData.user)
 
         // Fetch user's favorites
-        const favoritesResponse = await fetch(`http://localhost:4001/api/users/${userId}/favorites`)
+        const favoritesResponse = await fetch(`${config.apiUrl}/api/users/${userId}/favorites`)
 
         if (!favoritesResponse.ok) {
           throw new Error("Failed to fetch user favorites")
@@ -244,4 +247,3 @@ export default function UserFavoritesPage() {
     </div>
   )
 }
-

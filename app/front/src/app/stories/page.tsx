@@ -9,6 +9,9 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { useToast } from "@/components/ui/use-toast"
 import { Icons } from "@/components/icons"
 import { StoryCard } from "@/components/story-card"
+import { useAuth } from "@/contexts/auth-context"
+// Importez le fichier de configuration
+import { config } from "@/config"
 
 type Story = {
   id: number
@@ -23,6 +26,7 @@ type Story = {
 export default function StoriesPage() {
   const router = useRouter()
   const { toast } = useToast()
+  const { isAuthenticated, token } = useAuth()
   const [stories, setStories] = useState<Story[]>([])
   const [filteredStories, setFilteredStories] = useState<Story[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -69,8 +73,10 @@ export default function StoriesPage() {
         // Also apply any existing filters
         filterAndSortStories(fetchedStories, searchQuery, sortOrder)
 
-        // Get user favorites
-        fetchUserFavorites()
+        // Get user favorites if authenticated
+        if (isAuthenticated) {
+          fetchUserFavorites()
+        }
       } catch (error) {
         console.error("Error fetching stories:", error)
         toast({
@@ -83,28 +89,28 @@ export default function StoriesPage() {
       }
     }
 
-    const fetchUserFavorites = async () => {
-      try {
-        const token = localStorage.getItem("token")
-        if (!token) return
-
-        const response = await fetch("http://localhost:4001/api/favorites", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        })
-
-        if (response.ok) {
-          const data = await response.json()
-          setFavorites(data.favorites.map((fav: any) => fav.storyId))
-        }
-      } catch (error) {
-        console.error("Error fetching favorites:", error)
-      }
-    }
-
     fetchStories()
-  }, [activeTab, toast])
+  }, [activeTab, isAuthenticated, searchQuery, sortOrder, toast])
+
+  const fetchUserFavorites = async () => {
+    try {
+      if (!token) return
+
+      // Dans fetchUserFavorites():
+      const response = await fetch(`${config.apiUrl}/api/favorites`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setFavorites(data.favorites.map((fav: any) => fav.storyId))
+      }
+    } catch (error) {
+      console.error("Error fetching favorites:", error)
+    }
+  }
 
   const filterAndSortStories = (storiesToFilter: Story[], query: string, order: string) => {
     let filtered = [...storiesToFilter]
@@ -138,9 +144,7 @@ export default function StoriesPage() {
   }, [searchQuery, sortOrder, stories])
 
   const toggleFavorite = async (storyId: number) => {
-    const token = localStorage.getItem("token")
-
-    if (!token) {
+    if (!isAuthenticated) {
       toast({
         variant: "destructive",
         title: "Authentication required",
@@ -153,7 +157,8 @@ export default function StoriesPage() {
     try {
       if (favorites.includes(storyId)) {
         // Remove from favorites
-        const response = await fetch(`http://localhost:4001/api/favorites/${storyId}`, {
+        // Dans toggleFavorite() pour supprimer:
+        const response = await fetch(`${config.apiUrl}/api/favorites/${storyId}`, {
           method: "DELETE",
           headers: {
             Authorization: `Bearer ${token}`,
@@ -173,7 +178,8 @@ export default function StoriesPage() {
 
         if (!story) return
 
-        const response = await fetch("http://localhost:4001/api/favorites", {
+        // Dans toggleFavorite() pour ajouter:
+        const response = await fetch(`${config.apiUrl}/api/favorites`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -208,7 +214,7 @@ export default function StoriesPage() {
   }
 
   return (
-    <div className="container mx-auto py-8">
+    <div className="container mx-auto py-8 animate-fadeIn">
       <div className="flex flex-col space-y-6">
         <div className="flex flex-col space-y-2">
           <h1 className="text-3xl font-bold tracking-tight">Stories</h1>
@@ -218,10 +224,25 @@ export default function StoriesPage() {
         <div className="grid gap-6">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <Tabs defaultValue="new" value={activeTab} onValueChange={setActiveTab} className="w-full md:w-auto">
-              <TabsList>
-                <TabsTrigger value="top">Top</TabsTrigger>
-                <TabsTrigger value="new">New</TabsTrigger>
-                <TabsTrigger value="best">Best</TabsTrigger>
+              <TabsList className="grid w-full grid-cols-3 md:w-auto">
+                <TabsTrigger
+                  value="top"
+                  className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                >
+                  Top
+                </TabsTrigger>
+                <TabsTrigger
+                  value="new"
+                  className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                >
+                  New
+                </TabsTrigger>
+                <TabsTrigger
+                  value="best"
+                  className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                >
+                  Best
+                </TabsTrigger>
               </TabsList>
             </Tabs>
 
@@ -230,7 +251,7 @@ export default function StoriesPage() {
                 placeholder="Search stories..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="h-9"
+                className="h-9 transition-all focus-visible:ring-primary"
               />
               <Select value={sortOrder} onValueChange={setSortOrder}>
                 <SelectTrigger className="w-36 h-9">
@@ -248,13 +269,13 @@ export default function StoriesPage() {
           <div className="grid gap-4">
             {isLoading ? (
               Array.from({ length: 5 }).map((_, i) => (
-                <div key={i} className="slide-up-animation" style={{ animationDelay: `${i * 0.05}s` }}>
+                <div key={i} className="animate-pulse" style={{ animationDelay: `${i * 0.05}s` }}>
                   <Skeleton className="h-[140px] w-full rounded-md" />
                 </div>
               ))
             ) : filteredStories.length > 0 ? (
               filteredStories.map((story, index) => (
-                <div key={story.id} className="slide-up-animation" style={{ animationDelay: `${index * 0.05}s` }}>
+                <div key={story.id} className="animate-slideUp" style={{ animationDelay: `${index * 0.05}s` }}>
                   <StoryCard
                     story={story}
                     isFavorite={favorites.includes(story.id)}
@@ -263,7 +284,7 @@ export default function StoriesPage() {
                 </div>
               ))
             ) : (
-              <div className="text-center py-12">
+              <div className="text-center py-12 animate-fadeIn">
                 <Icons.search className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
                 <h3 className="text-lg font-medium">No stories found</h3>
                 <p className="text-muted-foreground">
@@ -277,4 +298,3 @@ export default function StoriesPage() {
     </div>
   )
 }
-

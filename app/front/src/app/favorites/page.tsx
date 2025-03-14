@@ -10,6 +10,8 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { useToast } from "@/components/ui/use-toast"
 import { Icons } from "@/components/icons"
 
+import { config } from "@/config"
+
 type Favorite = {
   id: number
   storyId: number
@@ -42,7 +44,8 @@ export default function FavoritesPage() {
           return
         }
 
-        const response = await fetch("http://localhost:4001/api/favorites", {
+        // Dans fetchFavorites():
+        const response = await fetch(`${config.apiUrl}/api/favorites`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -78,7 +81,8 @@ export default function FavoritesPage() {
         return
       }
 
-      const response = await fetch(`http://localhost:4001/api/favorites/${storyId}`, {
+      // Dans removeFavorite():
+      const response = await fetch(`${config.apiUrl}/api/favorites/${storyId}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -201,4 +205,3 @@ export default function FavoritesPage() {
     </div>
   )
 }
-

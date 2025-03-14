@@ -18,6 +18,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Separator } from "@/components/ui/separator"
 import { useToast } from "@/components/ui/use-toast"
 import { Icons } from "@/components/icons"
+import { useAuth } from "@/contexts/auth-context"
+
+import { config } from "@/config"
 
 const profileSchema = z
   .object({
@@ -50,6 +53,7 @@ type ProfileFormValues = z.infer<typeof profileSchema>
 export default function ProfilePage() {
   const router = useRouter()
   const { toast } = useToast()
+  const { user, updateUser } = useAuth()
   const [isLoading, setIsLoading] = useState(false)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [profileImage, setProfileImage] = useState<File | null>(null)
@@ -84,7 +88,8 @@ export default function ProfilePage() {
 
       setIsAuthenticated(true)
 
-      const response = await fetch("http://localhost:4001/api/users/profile", {
+      // Dans fetchUserProfile():
+      const response = await fetch(`${config.apiUrl}/api/users/profile`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -106,8 +111,25 @@ export default function ProfilePage() {
         confirmPassword: "",
       })
 
-      if (userData.profileImageUrl) {
-        setImagePreview(userData.profileImageUrl)
+      // Fetch avatar using the new endpoint
+      if (userData.id) {
+        try {
+          // Pour récupérer l'avatar:
+          const avatarResponse = await fetch(`${config.apiUrl}/api/users/${userData.id}/avatar`)
+          const avatarData = await avatarResponse.json()
+
+          if (avatarResponse.ok && avatarData.avatar) {
+            setImagePreview(avatarData.avatar)
+          } else if (userData.profileImageUrl) {
+            // Fallback to the stored URL if the avatar endpoint fails
+            setImagePreview(userData.profileImageUrl)
+          }
+        } catch (error) {
+          console.error("Error fetching avatar:", error)
+          if (userData.profileImageUrl) {
+            setImagePreview(userData.profileImageUrl)
+          }
+        }
       }
     } catch (error) {
       console.error("Error fetching user profile:", error)
@@ -162,7 +184,8 @@ export default function ProfilePage() {
         formData.append("profileImage", profileImage)
       }
 
-      const response = await fetch("http://localhost:4001/api/users/profile", {
+      // Dans onSubmit():
+      const response = await fetch(`${config.apiUrl}/api/users/profile`, {
         method: "PUT",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -174,6 +197,13 @@ export default function ProfilePage() {
         throw new Error("Failed to update profile")
       }
 
+      const updatedUserData = await response.json()
+
+      // Update user in auth context
+      if (updateUser && updatedUserData.user) {
+        updateUser(updatedUserData.user)
+      }
+
       toast({
         title: "Profile updated",
         description: "Your profile has been updated successfully.",
@@ -182,6 +212,21 @@ export default function ProfilePage() {
       // Reset the password fields
       form.setValue("password", "")
       form.setValue("confirmPassword", "")
+
+      // Refresh avatar if it was updated
+      if (profileImage && user?.id) {
+        try {
+          // Pour l'avatar mis à jour:
+          const avatarResponse = await fetch(`${config.apiUrl}/api/users/${user.id}/avatar`)
+          const avatarData = await avatarResponse.json()
+
+          if (avatarResponse.ok && avatarData.avatar) {
+            setImagePreview(avatarData.avatar)
+          }
+        } catch (error) {
+          console.error("Error fetching updated avatar:", error)
+        }
+      }
     } catch (error) {
       console.error("Error updating profile:", error)
       toast({
@@ -223,7 +268,7 @@ export default function ProfilePage() {
                     <Avatar className="w-24 h-24">
                       <AvatarImage src={imagePreview || "/placeholder.svg"} alt="Profile" />
                       <AvatarFallback>
-                        <Icons.user className="h-12 w-12" />
+                        {user?.username?.substring(0, 2).toUpperCase() || <Icons.user className="h-12 w-12" />}
                       </AvatarFallback>
                     </Avatar>
                     <div className="mt-2">
@@ -364,4 +409,3 @@ export default function ProfilePage() {
     </div>
   )
 }
-
